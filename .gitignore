@@ -1,0 +1,4 @@
+node_modules/
+dist/*
+logo.xcf
+dist/index.html
