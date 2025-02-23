@@ -1,9 +1,8 @@
 export type RestreamData = {
     readonly id: number
     readonly channelId: number
+    readonly name: string
     readonly active: boolean
-    readonly platform: string
-    readonly url: string | null
+    readonly url: string
     readonly streamKey: string
-    readonly protocol: string
 }

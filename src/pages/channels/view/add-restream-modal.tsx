@@ -43,13 +43,23 @@ export const AddRestreamModal = ({ show, requestClose, restreamData, addRestream
         shouldThrow: true
     });
 
-    useEffect(() => {
-        if (updatedData.platform !== 'custom')
-            setUpdatedData(old => ({ ...old, url: null, protocol: 'rtmp' }));
-
-    }, [updatedData.platform]);
-
     const onSaveClick = () => {
+
+        if (!updatedData.name) {
+            pushToast(<TextToast text='Name required!' />);
+            return;
+        }
+
+        if (!updatedData.url) {
+            pushToast(<TextToast text='URL required!' />);
+            return;
+        }
+
+        if (!updatedData.streamKey) {
+            pushToast(<TextToast text='Stream key required!' />);
+            return;
+        }
+
         if (isNewRestream) {
             addRestreamData(JSON.stringify(updatedData))
                 .then(resp => resp && addRestream(resp))
@@ -79,22 +89,8 @@ export const AddRestreamModal = ({ show, requestClose, restreamData, addRestream
                 <Headline3>Forward Stream</Headline3>
                 <InputsWrapper>
                     <ToggleSwitch label='Active' checked={updatedData.active} onClick={() => setUpdatedData(old => ({ ...old, active: !old.active }))} />
-                    <Select label='Platform' value={updatedData.platform} onChange={e => setUpdatedData(old => ({ ...old, platform: e.target.value }))}>
-                        <Option value='twitch'>Twitch</Option>
-                        <Option value='youtube'>YouTube</Option>
-                        <Option value='custom'>Custom</Option>
-                    </Select>
-                    {
-                        updatedData.platform === 'custom' && (
-                            <>
-                                <Select label='Protocol' value={updatedData.protocol} onChange={e => setUpdatedData(old => ({ ...old, protocol: e.target.value }))}>
-                                    <Option value='rtmp'>RTMP</Option>
-                                    <Option value='srt'>SRT</Option>
-                                </Select>
-                                <Input label='URL' value={updatedData.url ?? ''} onChange={e => setUpdatedData(old => ({ ...old, url: e.target.value }))} />
-                            </>
-                        )
-                    }
+                    <Input label='Name' value={updatedData.name} onChange={e => setUpdatedData(old => ({ ...old, name: e.target.value }))} />
+                    <Input label='URL' value={updatedData.url} onChange={e => setUpdatedData(old => ({ ...old, url: e.target.value }))} />
                     <Input label='Stream Key' value={updatedData.streamKey} onChange={e => setUpdatedData(old => ({ ...old, streamKey: e.target.value }))} />
                 </InputsWrapper>
                 <ButtonRow>

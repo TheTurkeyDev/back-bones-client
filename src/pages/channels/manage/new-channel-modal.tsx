@@ -12,7 +12,6 @@ type NewChannelModalProps = {
 export const NewChannelModal = ({ show, requestClose, addChannel }: NewChannelModalProps) => {
     const { pushToast } = useToast();
     const [name, setName] = useState('');
-    const [isPublic, setPublic] = useState(false);
 
     const [createChannel] = useQuery<Channel>('/api/channel', { requestData: postParams });
 
@@ -25,8 +24,7 @@ export const NewChannelModal = ({ show, requestClose, addChannel }: NewChannelMo
         const channel: Channel = {
             id: -1,
             name,
-            created: new Date().toISOString(),
-            isPublic
+            created: new Date().toISOString()
         };
         createChannel(JSON.stringify(channel)).then(c => c && addChannel(c));
     };
@@ -36,7 +34,6 @@ export const NewChannelModal = ({ show, requestClose, addChannel }: NewChannelMo
             <Headline3>New Channel</Headline3>
             <InputsWrapper>
                 <Input label='Name' value={name} onChange={e => setName(e.target.value)} />
-                <ToggleSwitch label='Public' checked={isPublic} onClick={() => setPublic(!isPublic)} />
             </InputsWrapper>
             <ButtonRow>
                 <ContainedButton onClick={onAddClick}>Add</ContainedButton>

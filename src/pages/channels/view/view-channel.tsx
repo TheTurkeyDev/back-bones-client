@@ -56,10 +56,10 @@ export const ViewChannel = () => {
 
     const [channel, loadingChannel, { setData: setChannelInfo, resetData }] = useFetch<Channel>(`/api/channel/${id}`);
     const [restreamPlatforms, loadingRestream, { setData }] = useFetch<readonly RestreamData[]>(`/api/channel/${id}/restreams`);
-    const [getStreamKey, fetchingStreamKey] = useQuery<{ readonly key: string }>(`/api/channel/${id}/streamkey`, { shouldThrow: true });
+    const [getStreamKey, fetchingStreamKey] = useQuery<{ readonly streamKey: string }>(`/api/channel/${id}/streamkey`, { shouldThrow: true });
     const [updateChannel] = useQuery<Channel>('/api/channel', { requestData: patchParams });
     const [deleteChannel] = useQuery<Channel>('/api/channel', { requestData: deleteParams });
-    const [refreshStreamKey] = useQuery<{ readonly key: string }>(`/api/channel/${id}/streamkey`, { requestData: postParams });
+    const [refreshStreamKey] = useQuery<{ readonly streamKey: string }>(`/api/channel/${id}/streamkey`, { requestData: patchParams });
 
     const [toDeleteChannel, setToDeleteChannel] = useState(false);
     const [toRefreshStreamKey, setToRefreshStreamKey] = useState(false);
@@ -74,16 +74,6 @@ export const ViewChannel = () => {
             setToDeleteChannel(false);
             navigate('/channels');
         });
-    };
-
-    const togglePublic = () => {
-        if (!channel)
-            return;
-
-        const updatedChannel = { ...channel, isPublic: !channel.isPublic };
-
-        setChannelInfo(updatedChannel);
-        onUpdateChannel(updatedChannel);
     };
 
     const onUpdateChannel = (channel: Channel) => {
@@ -108,12 +98,12 @@ export const ViewChannel = () => {
         if (streamKey)
             setStreamKey(undefined);
         else
-            getStreamKey().then(json => setStreamKey(json?.key));
+            getStreamKey().then(json => setStreamKey(json?.streamKey));
     };
 
     const onRefreshConfirm = () => {
         refreshStreamKey().then(json => {
-            setStreamKey(json?.key);
+            setStreamKey(json?.streamKey);
             setToRefreshStreamKey(false);
         });
     };
@@ -149,10 +139,6 @@ export const ViewChannel = () => {
                     <Icon className='fas fa-pen' onClick={() => setEditName(!editName)} />
                 </HeaderWrapper>
             }
-            <ButtonRow>
-                <OutlinedButton onClick={() => navigate('clips')}>Clips</OutlinedButton>
-                <OutlinedButton onClick={() => navigate('vods')}>VODs</OutlinedButton>
-            </ButtonRow>
             <InputsWrapper>
                 <Input
                     label='Stream Key'
@@ -166,49 +152,47 @@ export const ViewChannel = () => {
                             <Icon className='fas fa-redo' onClick={() => setToRefreshStreamKey(true)} />
                         </IconsWrapper>
                     } />
-                <ToggleSwitch label='Public' checked={channel.isPublic} onClick={togglePublic} />
             </InputsWrapper>
             <SpaceBetween>
                 <Headline4>Restream</Headline4>
                 <OutlinedButton onClick={() => setEditRestreamPlatform(({
                     id: -1,
                     channelId: channel.id,
+                    name: '',
                     active: true,
-                    platform: 'twitch',
-                    url: null,
+                    url: '',
                     streamKey: '',
-                    protocol: 'rtmp',
                 }))}>Add</OutlinedButton>
             </SpaceBetween>
             <CustomTable>
-                <tr>
-                    <TH>Active</TH>
-                    <TH>Platform</TH>
-                    <TH>Protocol</TH>
-                    <TH>URL</TH>
-                    <TH>Stream Key</TH>
-                </tr>
-                {
-                    ([...(restreamPlatforms ?? [])]).sort((a, b) => a.id - b.id).map(p => (
-                        <CustomRow key={p.id} onClick={() => setEditRestreamPlatform(p)}>
-                            <TD>
-                                <i className={p.active ? 'fas fa-check' : 'fas fa-times'} style={{ color: p.active ? 'green' : 'red' }} />
-                            </TD>
-                            <TD>
-                                <i className={platformIcons[p.platform]} />
-                            </TD>
-                            <TD>
-                                {p.protocol}
-                            </TD>
-                            <TD>
-                                {p.url}
-                            </TD>
-                            <TD>
-                                {p.streamKey}
-                            </TD>
-                        </CustomRow>
-                    ))
-                }
+                <thead>
+                    <tr>
+                        <TH>Active</TH>
+                        <TH>Name</TH>
+                        <TH>URL</TH>
+                        <TH>Stream Key</TH>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        ([...(restreamPlatforms ?? [])]).sort((a, b) => a.id - b.id).map(p => (
+                            <CustomRow key={p.id} onClick={() => setEditRestreamPlatform(p)}>
+                                <TD>
+                                    <i className={p.active ? 'fas fa-check' : 'fas fa-times'} style={{ color: p.active ? 'green' : 'red' }} />
+                                </TD>
+                                <TD>
+                                    {p.name}
+                                </TD>
+                                <TD>
+                                    {p.url}
+                                </TD>
+                                <TD>
+                                    {p.streamKey}
+                                </TD>
+                            </CustomRow>
+                        ))
+                    }
+                </tbody>
             </CustomTable>
             <ButtonRow>
                 <DangerButton onClick={() => setToDeleteChannel(true)}>DELETE CHANNEL</DangerButton>
