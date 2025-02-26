@@ -1,12 +1,13 @@
-import { Body1, ButtonRow, ConfirmationModal, Headline2, Headline4, Icon, Input, InputsWrapper, Loading, OutlinedButton, SpaceBetween, Table, TD, TextToast, TH, ToggleSwitch, useFetch, useQuery, useToast } from 'gobble-lib-react';
-import { useState } from 'react';
+import { Body1, ButtonRow, ConfirmationModal, Headline2, Headline4, Icon, Input, InputsWrapper, Loading, OutlinedButton, SpaceBetween, Table, TD, TH, useFetch, useQuery } from 'gobble-lib-react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { Channel } from '../channel';
 import { DangerButton } from '../../../components/danger-button';
 import { AddRestreamModal } from './add-restream-modal';
 import { RestreamData } from './restream-data';
-import { deleteParams, patchParams, postParams } from '../../../network/request-types';
+import { deleteParams, patchParams } from '../../../network/request-types';
+import { PasswordInput } from '../../../components/password-input';
 
 const PageWrapper = styled.div`
     height: fit-content;
@@ -43,16 +44,9 @@ const CustomRow = styled.tr`
     }
 `;
 
-const platformIcons: { readonly [key: string]: string } = {
-    'twitch': 'fab fa-twitch',
-    'youtube': 'fab fa-youtube',
-    'custom': 'fas fa-broadcast-tower'
-};
-
 export const ViewChannel = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { pushToast } = useToast();
 
     const [channel, loadingChannel, { setData: setChannelInfo, resetData }] = useFetch<Channel>(`/api/channel/${id}`);
     const [restreamPlatforms, loadingRestream, { setData }] = useFetch<readonly RestreamData[]>(`/api/channel/${id}/restreams`);
@@ -89,18 +83,6 @@ export const ViewChannel = () => {
         });
     };
 
-    const copyStreamKeyToClipBoard = () => {
-        streamKey && navigator.clipboard.writeText(streamKey);
-        pushToast(<TextToast text='Stream key copied to clipboard!' />);
-    };
-
-    const toggleStreamKey = () => {
-        if (streamKey)
-            setStreamKey(undefined);
-        else
-            getStreamKey().then(json => setStreamKey(json?.streamKey));
-    };
-
     const onRefreshConfirm = () => {
         refreshStreamKey().then(json => {
             setStreamKey(json?.streamKey);
@@ -118,7 +100,11 @@ export const ViewChannel = () => {
         setEditRestreamPlatform(undefined);
     };
 
-    if (loadingChannel)
+    useEffect(() => {
+        getStreamKey().then(json => setStreamKey(json?.streamKey));
+    }, []);
+
+    if (loadingChannel || loadingRestream)
         return <Loading />;
 
     if (!channel)
@@ -140,18 +126,12 @@ export const ViewChannel = () => {
                 </HeaderWrapper>
             }
             <InputsWrapper>
-                <Input
+                <PasswordInput
                     label='Stream Key'
-                    value={fetchingStreamKey || !streamKey ? 'Fetching key...' : streamKey}
-                    type={streamKey ? 'text' : 'password'}
-                    readOnly
-                    onClick={() => streamKey && copyStreamKeyToClipBoard()}
-                    postfixContent={
-                        <IconsWrapper>
-                            <Icon className={`far ${streamKey ? 'fa-eye-slash' : 'fa-eye'}`} onClick={toggleStreamKey} />
-                            <Icon className='fas fa-redo' onClick={() => setToRefreshStreamKey(true)} />
-                        </IconsWrapper>
-                    } />
+                    value={streamKey}
+                    canRefresh={true}
+                    refreshPassword={() => setToRefreshStreamKey(true)}
+                />
             </InputsWrapper>
             <SpaceBetween>
                 <Headline4>Restream</Headline4>
@@ -162,6 +142,8 @@ export const ViewChannel = () => {
                     active: true,
                     url: '',
                     streamKey: '',
+                    videoTrack: '',
+                    audioTrack: '',
                 }))}>Add</OutlinedButton>
             </SpaceBetween>
             <CustomTable>
@@ -170,7 +152,6 @@ export const ViewChannel = () => {
                         <TH>Active</TH>
                         <TH>Name</TH>
                         <TH>URL</TH>
-                        <TH>Stream Key</TH>
                     </tr>
                 </thead>
                 <tbody>
@@ -185,9 +166,6 @@ export const ViewChannel = () => {
                                 </TD>
                                 <TD>
                                     {p.url}
-                                </TD>
-                                <TD>
-                                    {p.streamKey}
                                 </TD>
                             </CustomRow>
                         ))
